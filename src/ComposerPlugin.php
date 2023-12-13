@@ -143,7 +143,7 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
         }
 
         $this->io->write('  - Detect executable: <comment>' . $this->executable . '</comment>');
-        $this->io->write('  - Detect configuration: <comment>' . $this->configuration . '</comment>');
+        $this->io->write('  - Detect configuration: <comment>' . $this->relativePath($this->configuration) . '</comment>');
         $this->io->write('  - Install hooks: ', false);
         $this->install();
         $this->io->write('<comment>done</comment>');
@@ -306,5 +306,16 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     private function pluginErrorMessage(string $reason): string
     {
         return 'Shiver me timbers! CaptainHook could not install yer git hooks! (' . $reason . ')';
+    }
+
+    /**
+     * Returns relative path
+     *
+     * @param string $path
+     * @return string
+     */
+    private function relativePath(string $path): string
+    {
+        return str_replace(getcwd(), '', $path);
     }
 }
