@@ -28,9 +28,6 @@ use RuntimeException;
  */
 class ComposerPlugin implements PluginInterface, EventSubscriberInterface
 {
-    private const COMMAND_CONFIGURE = 'configure';
-    private const COMMAND_INSTALL   = 'install';
-
     /**
      * Composer instance
      *
@@ -112,8 +109,6 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
         // Do nothing currently
     }
 
-
-
     /**
      * Make sure the installer is executed after the autoloader is created
      *
@@ -144,14 +139,14 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
         }
 
         if (getenv('CI') === 'true') {
-            $this->io->write(' <comment>disabling plugin due to CI-environment</comment>');
+            $this->io->write('  <comment>disabling plugin due to CI-environment</comment>');
             return;
         }
 
         $this->detectConfiguration();
         $this->detectGitDir();
         if ($this->isWorktree) {
-            $this->io->write('   <comment>ARRRRR! We ARRR in a worktree, install is skipped!</comment>');
+            $this->io->write('  <comment>ARRRRR! We ARRR in a worktree, install is skipped!</comment>');
             return;
         }
         $this->detectCaptainExecutable();
@@ -264,17 +259,6 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     }
 
     /**
-     * Creates a nice formatted error message
-     *
-     * @param  string $reason
-     * @return string
-     */
-    private function pluginErrorMessage(string $reason): string
-    {
-        return 'Shiver me timbers! CaptainHook could not install yer git hooks! (' . $reason . ')';
-    }
-
-    /**
      * Try to find the captainhook executable
      *
      * Will check the `extra` config otherwise it will use the composer `bin` directory.
@@ -320,11 +304,11 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     private function writeNoExecutableHelp(): void
     {
         $this->io->write(
-            '<comment>CaptainHook executable not found</comment>' . PHP_EOL .
+            '  <comment>CaptainHook executable not found</comment>' . PHP_EOL .
             PHP_EOL .
-            'Make sure you have installed <info>CaptainHook</info> .' . PHP_EOL .
-            'If you installed the Cap\'n to a custom location you have to configure the path ' .PHP_EOL .
-            'to your CaptainHook executable using Composers \'extra\' config. e.g.' . PHP_EOL .
+            '  Make sure you have installed <info>CaptainHook</info> .' . PHP_EOL .
+            '  If you installed the Cap\'n to a custom location you have to configure the path ' .PHP_EOL .
+            '  to your CaptainHook executable using Composers \'extra\' config. e.g.' . PHP_EOL .
             PHP_EOL . '<comment>' .
             '    "extra": {' . PHP_EOL .
             '        "captainhook": {' . PHP_EOL .
@@ -332,9 +316,9 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
             '        }' . PHP_EOL .
             '    }' . PHP_EOL .
             '</comment>' . PHP_EOL .
-            'If you are uninstalling CaptainHook, we are sad seeing you go, ' .
-            'but we would appreciate your feedback on your experience.' . PHP_EOL .
-            'Just go to https://github.com/captainhookphp/captainhook/issues to leave your feedback' . PHP_EOL .
+            '  If you are uninstalling CaptainHook, we are sad seeing you go, ' .
+            '  but we would appreciate your feedback on your experience.' . PHP_EOL .
+            '  Just go to https://github.com/captainhookphp/captainhook/issues to leave your feedback' . PHP_EOL .
             PHP_EOL
         );
     }
@@ -347,19 +331,29 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     private function writeNoConfigHelp(): void
     {
         $this->io->write(
-            '<comment>CaptainHook configuration not found</comment>' . PHP_EOL .
+            '  <comment>CaptainHook configuration not found</comment>' . PHP_EOL .
             PHP_EOL .
-            'If your CaptainHook configuration is not named <info>captainhook.json</info> or is not' . PHP_EOL .
-            'located in your repository root you have to configure the path to your' .PHP_EOL .
-            'CaptainHook configuration using Composers \'extra\' config. e.g.' . PHP_EOL .
-            PHP_EOL . '<comment>' .
-            '    "extra": {' . PHP_EOL .
+            '  If your CaptainHook configuration is not named <info>captainhook.json</info> or is not' . PHP_EOL .
+            '  located in your repository root you have to configure the path to your' .PHP_EOL .
+            '  CaptainHook configuration using Composers \'extra\' config. e.g.' . PHP_EOL .
+            PHP_EOL .
+            '    <comment>"extra": {' . PHP_EOL .
             '        "captainhook": {' . PHP_EOL .
             '            "config": "config/hooks.json' . PHP_EOL .
             '        }' . PHP_EOL .
-            '    }' . PHP_EOL .
-            '</comment>' . PHP_EOL .
+            '    }</comment>' . PHP_EOL .
             PHP_EOL
         );
+    }
+
+    /**
+     * Creates a nice formatted error message
+     *
+     * @param  string $reason
+     * @return string
+     */
+    private function pluginErrorMessage(string $reason): string
+    {
+        return 'Shiver me timbers! CaptainHook could not install yer git hooks! (' . $reason . ')';
     }
 }
