@@ -267,7 +267,7 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
             '        }' . PHP_EOL .
             '    }' . PHP_EOL .
             '</comment>' . PHP_EOL .
-            '  If you are uninstalling CaptainHook, we are sad seeing you go, ' .
+            '  If you are uninstalling CaptainHook, we are sad seeing you go, ' . PHP_EOL .
             '  but we would appreciate your feedback on your experience.' . PHP_EOL .
             '  Just go to https://github.com/captainhookphp/captainhook/issues to leave your feedback' . PHP_EOL .
             PHP_EOL
