@@ -131,7 +131,7 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
      */
     public function installHooks(Event $event): void
     {
-        $this->io->write('<info>CaptainHook Composer Plugin</info>');
+        $this->io->write('<info>CaptainHook HookInstaller</info>');
 
         if ($this->isPluginDisabled()) {
             $this->io->write('  <comment>plugin is disabled</comment>');
@@ -169,7 +169,7 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     {
         // Respect composer CLI settings
         $ansi        = $this->io->isDecorated() ? ' --ansi' : ' --no-ansi';
-        $interaction = $this->io->isInteractive() ? '' : ' --no-interaction';
+        $interaction = ' --no-interaction';
         $executable  = escapeshellarg($this->executable);
 
         // captainhook config and repository settings
