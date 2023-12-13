@@ -131,26 +131,15 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
      */
     public function installHooks(Event $event): void
     {
-        $this->io->write('<info>CaptainHook HookInstaller</info>');
-
-        if ($this->isPluginDisabled()) {
-            $this->io->write('  <comment>plugin is disabled</comment>');
-            return;
-        }
-
-        if (getenv('CI') === 'true') {
-            $this->io->write('  <comment>disabling plugin due to CI-environment</comment>');
-            return;
-        }
+        $this->io->write('<info>CaptainHook Hook Installer</info>');
 
         $this->detectConfiguration();
         $this->detectGitDir();
-        if ($this->isWorktree) {
-            $this->io->write('  <comment>ARRRRR! We ARRR in a worktree, install is skipped!</comment>');
-            return;
-        }
         $this->detectCaptainExecutable();
 
+        if ($this->shouldExecutionBeSkipped()) {
+            return;
+        }
         if (!file_exists($this->executable)) {
             $this->writeNoExecutableHelp();
             return;
@@ -159,53 +148,11 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
             $this->writeNoConfigHelp();
             return;
         }
+
+        $this->io->write('  - Detect configuration: <comment>found ' . $this->configuration . '</comment>');
+        $this->io->write('  - Install hooks: ', false);
         $this->install();
-    }
-
-    /**
-     * Install hooks to your .git/hooks directory
-     */
-    private function install(): void
-    {
-        // Respect composer CLI settings
-        $ansi        = $this->io->isDecorated() ? ' --ansi' : ' --no-ansi';
-        $interaction = ' --no-interaction';
-        $executable  = escapeshellarg($this->executable);
-
-        // captainhook config and repository settings
-        $configuration  = ' -c ' . escapeshellarg($this->configuration);
-        $repository     = ' -g ' . escapeshellarg($this->gitDirectory);
-        $forceOrSkip    = $this->isForceInstall() ? ' -f' : ' -s';
-
-        // sub process settings
-        $cmd   = PHP_BINARY . ' '  . $executable . ' install'
-               . $ansi . $interaction . $forceOrSkip
-               . $configuration . $repository;
-        $pipes = [];
-        $spec  = [
-            0 => ['file', 'php://stdin', 'r'],
-            1 => ['file', 'php://stdout', 'w'],
-            2 => ['file', 'php://stderr', 'w'],
-        ];
-
-        $process = @proc_open($cmd, $spec, $pipes);
-
-        if ($this->io->isVerbose()) {
-            $this->io->write('Running process : ' . $cmd);
-        }
-        if (!is_resource($process)) {
-            throw new RuntimeException($this->pluginErrorMessage('no-process'));
-        }
-
-        // Loop on process until it exits normally.
-        do {
-            $status = proc_get_status($process);
-        } while ($status && $status['running']);
-        $exitCode = $status['exitcode'] ?? -1;
-        proc_close($process);
-        if ($exitCode !== 0) {
-            $this->io->writeError($this->pluginErrorMessage('installation process failed'));
-        }
+        $this->io->write('<comment>done</comment>');
     }
 
     /**
@@ -275,6 +222,28 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     }
 
     /**
+     * Should we actually execute the plugin
+     *
+     * @return bool
+     */
+    private function shouldExecutionBeSkipped(): bool
+    {
+        if ($this->isPluginDisabled()) {
+            $this->io->write('  <comment>plugin is disabled</comment>');
+            return true;
+        }
+        if (getenv('CI') === 'true') {
+            $this->io->write('  <comment>disabling plugin due to CI-environment</comment>');
+            return true;
+        }
+        if ($this->isWorktree) {
+            $this->io->write('  <comment>ARRRRR! We ARRR in a worktree, install is skipped!</comment>');
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Check if the plugin is disabled
      *
      * @return bool
@@ -294,6 +263,51 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     {
         $extra = $this->composer->getPackage()->getExtra();
         return ($extra['captainhook']['force-install'] ?? false) || getenv('CAPTAINHOOK_FORCE_INSTALL') === 'true';
+    }
+
+    /**
+     * Install hooks to your .git/hooks directory
+     */
+    private function install(): void
+    {
+        // Respect composer CLI settings
+        $ansi        = $this->io->isDecorated() ? ' --ansi' : ' --no-ansi';
+        $executable  = escapeshellarg($this->executable);
+
+        // captainhook config and repository settings
+        $configuration  = ' -c ' . escapeshellarg($this->configuration);
+        $repository     = ' -g ' . escapeshellarg($this->gitDirectory);
+        $forceOrSkip    = $this->isForceInstall() ? ' -f' : ' -s';
+
+        // sub process settings
+        $cmd   = PHP_BINARY . ' '  . $executable . ' install'
+                 . $ansi . ' --no-interaction' . $forceOrSkip
+                 . $configuration . $repository;
+        $pipes = [];
+        $spec  = [
+            0 => ['file', 'php://stdin', 'r'],
+            1 => ['file', 'php://stdout', 'w'],
+            2 => ['file', 'php://stderr', 'w'],
+        ];
+
+        $process = @proc_open($cmd, $spec, $pipes);
+
+        if ($this->io->isVerbose()) {
+            $this->io->write('Running process : ' . $cmd);
+        }
+        if (!is_resource($process)) {
+            throw new RuntimeException($this->pluginErrorMessage('no-process'));
+        }
+
+        // Loop on process until it exits normally.
+        do {
+            $status = proc_get_status($process);
+        } while ($status && $status['running']);
+        $exitCode = $status['exitcode'] ?? -1;
+        proc_close($process);
+        if ($exitCode !== 0) {
+            $this->io->writeError($this->pluginErrorMessage('installation process failed'));
+        }
     }
 
     /**
