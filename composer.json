@@ -1,0 +1,30 @@
+{
+  "name": "captainhook/hook-installer",
+  "description": "Composer Plugin that makes everyone activate the CaptainHook git hooks locally",
+  "type": "composer-plugin",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Sebastian Feldmann",
+      "email": "sf@sebastian-feldmann.info"
+    }
+  ],
+  "require": {
+    "php": ">=8.0",
+    "composer-plugin-api": "^1.1|^2.0"
+  },
+  "require-dev": {
+    "composer/composer": "*"
+  },
+  "extra": {
+    "class": "CaptainHook\\HookInstaller\\ComposerPlugin"
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "autoload": {
+    "psr-4": {
+      "CaptainHook\\HookInstaller\\": "src"
+    }
+  }
+}
