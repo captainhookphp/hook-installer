@@ -57,16 +57,9 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     private string $configuration;
 
     /**
-     * Path to the .git directory
-     *
-     * @var string
+     * @var \CaptainHook\HookInstaller\DotGit
      */
-    private string $gitDirectory;
-
-    /**
-     * @var bool
-     */
-    private bool $isWorktree = false;
+    private DotGit $dotGit;
 
     /**
      * Activate the plugin
@@ -133,8 +126,8 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     {
         $this->io->write('<info>CaptainHook Hook Installer</info>');
 
-        $this->detectConfiguration();
         $this->detectGitDir();
+        $this->detectConfiguration();
         $this->detectCaptainExecutable();
 
         if ($this->shouldExecutionBeSkipped()) {
@@ -149,7 +142,8 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
             return;
         }
 
-        $this->io->write('  - Detect configuration: <comment>found ' . $this->configuration . '</comment>');
+        $this->io->write('  - Detect executable: <comment>' . $this->executable . '</comment>');
+        $this->io->write('  - Detect configuration: <comment>' . $this->configuration . '</comment>');
         $this->io->write('  - Install hooks: ', false);
         $this->install();
         $this->io->write('<comment>done</comment>');
@@ -174,35 +168,11 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
      */
     private function detectGitDir(): void
     {
-        $path = getcwd();
-
-        while (file_exists($path)) {
-            $possibleGitDir = $path . '/.git';
-            if (is_dir($possibleGitDir)) {
-                $this->gitDirectory = $possibleGitDir;
-                return;
-            } elseif (is_file($possibleGitDir)) {
-                $gitfile = file($possibleGitDir);
-                $match = [];
-                preg_match('#^gitdir: (?<gitdir>[a-zA-Z/\.]*\.git)#', $gitfile[0] ?? '', $match);
-                $dir = $match['gitdir'] ?? '';
-                if (is_dir($dir)) {
-                    $this->isWorktree = true;
-                }
-
-            }
-
-            // if we checked the root directory already, break to prevent endless loop
-            if ($path === dirname($path)) {
-                break;
-            }
-
-            $path = \dirname($path);
+        try {
+            $this->dotGit = DotGit::searchInPath(getcwd());
+        } catch (RuntimeException $e) {
+            throw new RuntimeException($this->pluginErrorMessage($e->getMessage()));
         }
-        if ($this->isWorktree) {
-            return;
-        }
-        throw new RuntimeException($this->pluginErrorMessage('git directory not found'));
     }
 
     /**
@@ -217,7 +187,6 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
             $this->executable = $extra['captainhook']['exec'];
             return;
         }
-
         $this->executable = (string) $this->composer->getConfig()->get('bin-dir') . '/captainhook';
     }
 
@@ -236,7 +205,7 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
             $this->io->write('  <comment>disabling plugin due to CI-environment</comment>');
             return true;
         }
-        if ($this->isWorktree) {
+        if ($this->dotGit->isAdditionalWorktree()) {
             $this->io->write('  <comment>ARRRRR! We ARRR in a worktree, install is skipped!</comment>');
             return true;
         }
@@ -270,43 +239,11 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
      */
     private function install(): void
     {
-        // Respect composer CLI settings
-        $ansi        = $this->io->isDecorated() ? ' --ansi' : ' --no-ansi';
-        $executable  = escapeshellarg($this->executable);
-
-        // captainhook config and repository settings
-        $configuration  = ' -c ' . escapeshellarg($this->configuration);
-        $repository     = ' -g ' . escapeshellarg($this->gitDirectory);
-        $forceOrSkip    = $this->isForceInstall() ? ' -f' : ' -s';
-
-        // sub process settings
-        $cmd   = PHP_BINARY . ' '  . $executable . ' install'
-                 . $ansi . ' --no-interaction' . $forceOrSkip
-                 . $configuration . $repository;
-        $pipes = [];
-        $spec  = [
-            0 => ['file', 'php://stdin', 'r'],
-            1 => ['file', 'php://stdout', 'w'],
-            2 => ['file', 'php://stderr', 'w'],
-        ];
-
-        $process = @proc_open($cmd, $spec, $pipes);
-
-        if ($this->io->isVerbose()) {
-            $this->io->write('Running process : ' . $cmd);
-        }
-        if (!is_resource($process)) {
-            throw new RuntimeException($this->pluginErrorMessage('no-process'));
-        }
-
-        // Loop on process until it exits normally.
-        do {
-            $status = proc_get_status($process);
-        } while ($status && $status['running']);
-        $exitCode = $status['exitcode'] ?? -1;
-        proc_close($process);
-        if ($exitCode !== 0) {
-            $this->io->writeError($this->pluginErrorMessage('installation process failed'));
+        try {
+            $installer = new Installer($this->executable, $this->configuration, $this->dotGit->gitDirectory());
+            $installer->install($this->io, $this->isForceInstall());
+        } catch (\Exception $e) {
+            throw new RuntimeException($this->pluginErrorMessage($e->getMessage()));
         }
     }
 
