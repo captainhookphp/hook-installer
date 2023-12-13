@@ -316,6 +316,6 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
      */
     private function relativePath(string $path): string
     {
-        return str_replace(getcwd(), '', $path);
+        return str_replace(getcwd() . '/', '', $path);
     }
 }
