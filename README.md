@@ -12,13 +12,13 @@ For more information about `CaptainHook` visit the [Website](http://captainhook.
 
 ## Installation:
 
-As this is a composer-plugin so the installation method is to use composer for installation.
+As this is a composer-plugin you should use composer to install it.
  
 ```bash
 $ composer require --dev captainhook/hook-installer
 ```
 
-Everything else will happen automagically.
+Everything else should happen automagically.
 
 ## Customize
 
