@@ -125,19 +125,24 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     public function installHooks(Event $event): void
     {
         $this->io->write('<info>CaptainHook Hook Installer</info>');
-
-        $this->detectConfiguration();
-        $this->detectCaptainExecutable();
-
         if ($this->shouldExecutionBeSkipped()) {
             return;
         }
-        if (!file_exists($this->executable)) {
-            $this->writeNoExecutableHelp();
+        $this->detectConfiguration();
+        $this->detectCaptainExecutable();
+        $this->detectGitDir();
+
+        if ($this->dotGit->isAdditionalWorktree()) {
+            $this->displayGitWorktreeInfo();
             return;
         }
+        if (!file_exists($this->executable)) {
+            $this->displayNoExecutableInfo();
+            return;
+        }
+
         if (!file_exists($this->configuration)) {
-            $this->writeNoConfigHelp();
+            $this->displayNoConfigInfo();
             return;
         }
 
@@ -204,12 +209,6 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
             $this->io->write('  <comment>disabling plugin due to CI-environment</comment>');
             return true;
         }
-
-        $this->detectGitDir();
-        if ($this->dotGit->isAdditionalWorktree()) {
-            $this->io->write('  <comment>ARRRRR! We ARRR in a worktree, install is skipped!</comment>');
-            return true;
-        }
         return false;
     }
 
@@ -249,11 +248,21 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     }
 
     /**
+     * Displays some message to make the user aware that the plugin is doing nothing because we are in a worktree
+     *
+     * @return void
+     */
+    private function displayGitWorktreeInfo(): void
+    {
+        $this->io->write('  <comment>ARRRRR! We ARRR in a worktree, install is skipped!</comment>');
+    }
+
+    /**
      * Displays a helpful message to the user if the captainhook executable could not be found
      *
      * @return void
      */
-    private function writeNoExecutableHelp(): void
+    private function displayNoExecutableInfo(): void
     {
         $this->io->write(
             '  <comment>CaptainHook executable not found</comment>' . PHP_EOL .
@@ -280,7 +289,7 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
      *
      * @return void
      */
-    private function writeNoConfigHelp(): void
+    private function displayNoConfigInfo(): void
     {
         $this->io->write(
             '  <comment>CaptainHook configuration not found</comment>' . PHP_EOL .
