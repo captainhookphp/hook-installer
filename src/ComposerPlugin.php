@@ -126,7 +126,6 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     {
         $this->io->write('<info>CaptainHook Hook Installer</info>');
 
-        $this->detectGitDir();
         $this->detectConfiguration();
         $this->detectCaptainExecutable();
 
@@ -205,6 +204,8 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
             $this->io->write('  <comment>disabling plugin due to CI-environment</comment>');
             return true;
         }
+
+        $this->detectGitDir();
         if ($this->dotGit->isAdditionalWorktree()) {
             $this->io->write('  <comment>ARRRRR! We ARRR in a worktree, install is skipped!</comment>');
             return true;
