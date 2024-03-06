@@ -39,6 +39,7 @@ configure anything to make it work.
       "config": "config/captainhook.json",
       "exec": "tools/captainhook.phar",
       "force-install": true,
+      "only-enabled": true,
       "disable-plugin": false
     }    
   }  

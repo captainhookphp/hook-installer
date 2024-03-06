@@ -54,11 +54,12 @@ class Installer
     /**
      * Install the hooks by executing the Cap'n
      *
-     * @param \Composer\IO\IOInterface $io
-     * @param bool                     $force
+     * @param  \Composer\IO\IOInterface $io
+     * @param  bool                     $force
+     * @param  bool                     $enabled
      * @return void
      */
-    public function install(IOInterface $io, bool $force): void
+    public function install(IOInterface $io, bool $force, bool $enabled): void
     {
         // Respect composer CLI settings
         $ansi        = $io->isDecorated() ? ' --ansi' : ' --no-ansi';
@@ -68,10 +69,11 @@ class Installer
         $configuration  = ' -c ' . escapeshellarg($this->configuration);
         $repository     = ' -g ' . escapeshellarg($this->gitDirectory);
         $forceOrSkip    = $force ? ' -f' : ' -s';
+        $onlyEnabled    = $enabled ? ' --only-enabled' : '';
 
         // sub process settings
         $cmd   = PHP_BINARY . ' '  . $executable . ' install'
-                 . $ansi . ' --no-interaction' . $forceOrSkip
+                 . $ansi . ' --no-interaction' . $forceOrSkip . $onlyEnabled
                  . $configuration . $repository;
         $pipes = [];
         $spec  = [

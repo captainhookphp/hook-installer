@@ -228,10 +228,21 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
      *
      * @return bool
      */
-    private function isForceInstall(): bool
+    private function forceInstallConfig(): bool
     {
         $extra = $this->composer->getPackage()->getExtra();
         return ($extra['captainhook']['force-install'] ?? false) || getenv('CAPTAINHOOK_FORCE_INSTALL') === 'true';
+    }
+
+    /**
+     * Is a force installation configured
+     *
+     * @return bool
+     */
+    private function onlyEnabledConfig(): bool
+    {
+        $extra = $this->composer->getPackage()->getExtra();
+        return $extra['captainhook']['only-enabled'] ?? false;
     }
 
     /**
@@ -241,7 +252,7 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     {
         try {
             $installer = new Installer($this->executable, $this->configuration, $this->dotGit->gitDirectory());
-            $installer->install($this->io, $this->isForceInstall());
+            $installer->install($this->io, $this->forceInstallConfig(), $this->onlyEnabledConfig());
         } catch (\Exception $e) {
             throw new RuntimeException($this->pluginErrorMessage($e->getMessage()));
         }
