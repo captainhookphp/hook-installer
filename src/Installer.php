@@ -72,7 +72,7 @@ class Installer
         $onlyEnabled    = $enabled ? ' --only-enabled' : '';
 
         // sub process settings
-        $cmd   = PHP_BINARY . ' '  . $executable . ' install'
+        $cmd   = escapeshellarg(PHP_BINARY) . ' '  . $executable . ' install'
                  . $ansi . ' --no-interaction' . $forceOrSkip . $onlyEnabled
                  . $configuration . $repository;
         $pipes = [];
